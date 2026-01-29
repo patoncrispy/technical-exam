@@ -1,62 +1,59 @@
 import { Client } from "basic-ftp";
-import fs from "fs";
+import { readFile } from "fs/promises";
+import { config } from "../config";
+import { logger } from "../logger";
 import { readWarningData } from "../parser/ReadWarningData";
 
-export class WarningColletor {
-  async downloadWarning(amocRegion:string) {
+export class WarningCollector {
+  async downloadWarning(amocRegion: string): Promise<string> {
     const client = new Client();
-    client.ftp.verbose = true;
-    
-    await client.access({
-      host: "ftp.bom.gov.au",
-      secure: false,
-    });
+    try {
+      await client.access({
+        host: config.ftp.host,
+        secure: config.ftp.secure,
+      });
 
-    await client.cd("/anon/gen/fwo/");
+      await client.cd(config.ftp.warningsPath);
+      const files = await client.list();
 
-    const files = await client.list();
-
-    for (let file=0; file<files.length; file++) {
-      if (files[file].name.endsWith(".amoc.xml") && `${amocRegion}.amoc.xml` == files[file].name) {
-        let fileData = files[file];
-        if(fileData.isSymbolicLink === false && fileData.isDirectory == false) {
-          await client.download(`./${amocRegion}.xml`, files[file].name);
+      for (const fileData of files) {
+        if (fileData.name.endsWith(".amoc.xml") && `${amocRegion}.amoc.xml` === fileData.name) {
+          if (!fileData.isSymbolicLink && !fileData.isDirectory) {
+            await client.download(`./${amocRegion}.xml`, fileData.name);
+          }
         }
       }
-    }
 
-    client.close();
-    const data = readWarningData(amocRegion);
-    
-    return data;
+      const data = await readWarningData(amocRegion);
+      return data;
+    } catch (err) {
+      logger.error({ err, amocRegion }, 'Failed to download warning');
+      throw err;
+    } finally {
+      client.close();
+    }
   }
 }
 
-export class WarningTextCollector extends WarningColletor {
-  async downloadWarning(key: string) {
+export class WarningTextCollector extends WarningCollector {
+  async downloadWarning(key: string): Promise<string> {
     const client = new Client();
-    client.ftp.verbose = true;
-    let warningText = "";
     try {
       await client.access({
-        host: "ftp.bom.gov.au",
-        secure: false,
+        host: config.ftp.host,
+        secure: config.ftp.secure,
       });
 
-      await client.cd("/anon/gen/fwo/");
-
+      await client.cd(config.ftp.warningsPath);
       await client.download(`./${key}.txt`, key + ".txt");
 
-      warningText = fs.readFileSync(`./${key}.txt`, {
-        encoding: "utf-8",
-      });
+      const warningText = await readFile(`./${key}.txt`, { encoding: "utf-8" });
+      return warningText;
     } catch (err) {
-      console.log(key + " file not found");
+      logger.warn({ err, key }, 'Warning text file not found');
       return "";
+    } finally {
+      client.close();
     }
-
-    client.close();
-
-    return warningText;
   }
 }

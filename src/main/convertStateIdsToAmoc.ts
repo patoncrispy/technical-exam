@@ -1,16 +1,16 @@
 export function convertStateIdsToAmoc(state: string): string {
-  switch (state) {
+  switch (state.toUpperCase()) {
     case "NT":
       return "IDD";
     case "NSW":
       return "IDN";
-    case "Qld":
+    case "QLD":
       return "IDQ";
     case "SA":
       return "IDS";
-    case "Tas":
+    case "TAS":
       return "IDT";
-    case "Vic":
+    case "VIC":
       return "IDV";
     case "WA":
       return "IDW";

@@ -1,35 +1,36 @@
 import { Client } from "basic-ftp";
+import { config } from "../config";
+import { logger } from "../logger";
 
-export async function getAllWarns() {
+export async function getAllWarns(): Promise<string[]> {
   const client = new Client();
-  // client.ftp.verbose = true;
   try {
     await client.access({
-      host: "ftp.bom.gov.au",
-      secure: false,
+      host: config.ftp.host,
+      secure: config.ftp.secure,
     });
 
-    await client.cd("/anon/gen/fwo/");
+    await client.cd(config.ftp.warningsPath);
     const files = await client.list();
-
-   const warns = await getNames(files)
+    const warns = await getNames(files);
 
     return warns;
   } catch (err) {
-    console.log(err);
+    logger.error({ err }, 'Failed to fetch warnings');
+    throw err;
+  } finally {
+    client.close();
   }
-
-  client.close();
 }
 
-export const getNames = async (warnings:any)=>{
-  let warns: any = [];
-  
-  for (var file in warnings) {
-    if (warnings[file].name.endsWith(".amoc.xml")) {
-      warns.push(warnings[file].name)
+export const getNames = async (warnings: { name: string }[]): Promise<string[]> => {
+  const warns: string[] = [];
+
+  for (const warning of warnings) {
+    if (warning.name.endsWith(".amoc.xml")) {
+      warns.push(warning.name);
     }
   }
 
-  return warns
-}
+  return warns;
+};

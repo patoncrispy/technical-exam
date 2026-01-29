@@ -53,7 +53,9 @@ export class FloodWarningParser {
     });
     const downloader = new WarningTextCollector();
 
-    const warningText = await downloader.downloadWarning(obj.amoc.identifier[0]);
+    const warningText = await downloader.downloadWarning(
+      obj.amoc.identifier[0],
+    );
 
     return warningText;
   }
@@ -99,43 +101,56 @@ function getService(obj: any) {
   return service;
 }
 
-function parseProductType(obj: any) {
-  let productType;
+export function parseProductType(obj: any): string | undefined {
+  let productType: string | undefined;
 
-  if(obj && obj.amoc["product-type"]) {
-    productType = (obj.amoc["product-type"] || [])[0]
+  if (obj && obj.amoc["product-type"]) {
+    productType = (obj.amoc["product-type"] || [])[0];
   }
 
   switch (productType) {
     case "A":
       productType = "Advice";
+      break;
     case "B":
       productType = "Bundle";
+      break;
     case "C":
       productType = "Climate";
+      break;
     case "D":
       productType = "Metadata";
+      break;
     case "E":
       productType = "Analysis";
+      break;
     case "F":
       productType = "Forecast";
+      break;
     case "M":
       productType = "Numerical Weather Prediction";
+      break;
     case "O":
       productType = "Observation";
+      break;
     case "Q":
       productType = "Reference";
+      break;
     case "R":
       productType = "Radar";
+      break;
     case "S":
       productType = "Special";
+      break;
     case "T":
       productType = "Satellite";
+      break;
     case "W":
       productType = "Warning";
+      break;
     case "X":
       productType = "Mixed";
+      break;
   }
   return productType;
 }
-

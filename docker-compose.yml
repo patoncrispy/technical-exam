@@ -1,0 +1,10 @@
+services:
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # Set to 'true' when FTPS credentials are available
+      # - BOM_FTP_SECURE=true
